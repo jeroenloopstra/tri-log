@@ -51,6 +51,7 @@ typeSelect.addEventListener("change", () => {
   document.getElementById("swimDist").value = preset.swim;
   document.getElementById("bikeDist").value = preset.bike;
   document.getElementById("runDist").value = preset.run;
+  updateComputedDisplays();
 });
 
 let sortMode = localStorage.getItem("triLogSortMode") || "date";
@@ -101,6 +102,28 @@ function totalSeconds(race) {
 function resultLabel(race) {
   if (!race.place || !race.fieldSize) return "";
   return `${race.place} / ${race.fieldSize}`;
+}
+
+function formatPace(secondsPerUnit) {
+  if (!isFinite(secondsPerUnit) || secondsPerUnit <= 0) return "";
+  const m = Math.floor(secondsPerUnit / 60);
+  const s = Math.round(secondsPerUnit % 60);
+  return `${m}:${pad(s)}`;
+}
+
+function swimPace(distM, timeSec) {
+  if (!distM || !timeSec) return "";
+  return `${formatPace(timeSec / (distM / 100))} /100m`;
+}
+
+function bikeSpeed(distKm, timeSec) {
+  if (!distKm || !timeSec) return "";
+  return `${(distKm / (timeSec / 3600)).toFixed(1)} km/h`;
+}
+
+function runPace(distKm, timeSec) {
+  if (!distKm || !timeSec) return "";
+  return `${formatPace(timeSec / distKm)} /km`;
 }
 
 function formatDate(dateStr) {
@@ -191,11 +214,11 @@ function openDetail(id) {
     </div>
     ${photoHtml}
     <table class="detail-table">
-      <tr><td>Swim (${race.swimDist || 0} m)</td><td>${formatSeconds(race.swimTime)}</td></tr>
+      <tr><td>Swim (${race.swimDist || 0} m)</td><td>${formatSeconds(race.swimTime)}${swimPace(race.swimDist, race.swimTime) ? `<span class="pace">${swimPace(race.swimDist, race.swimTime)}</span>` : ""}</td></tr>
       <tr><td>T1</td><td>${formatSeconds(race.t1Time)}</td></tr>
-      <tr><td>Bike (${race.bikeDist || 0} km)</td><td>${formatSeconds(race.bikeTime)}</td></tr>
+      <tr><td>Bike (${race.bikeDist || 0} km)</td><td>${formatSeconds(race.bikeTime)}${bikeSpeed(race.bikeDist, race.bikeTime) ? `<span class="pace">${bikeSpeed(race.bikeDist, race.bikeTime)}</span>` : ""}</td></tr>
       <tr><td>T2</td><td>${formatSeconds(race.t2Time)}</td></tr>
-      <tr><td>Run (${race.runDist || 0} km)</td><td>${formatSeconds(race.runTime)}</td></tr>
+      <tr><td>Run (${race.runDist || 0} km)</td><td>${formatSeconds(race.runTime)}${runPace(race.runDist, race.runTime) ? `<span class="pace">${runPace(race.runDist, race.runTime)}</span>` : ""}</td></tr>
       <tr class="total"><td>Total</td><td>${formatSeconds(totalSeconds(race))}</td></tr>
     </table>
   `;
@@ -237,10 +260,18 @@ function getHMS(target) {
   return secondsFromHMS(h.value, m.value, s.value);
 }
 
-function updateTotalDisplay() {
+function updateComputedDisplays() {
   const total =
     getHMS("swimTime") + getHMS("t1Time") + getHMS("bikeTime") + getHMS("t2Time") + getHMS("runTime");
   document.getElementById("totalTimeDisplay").textContent = formatSeconds(total);
+
+  const swimDist = Number(document.getElementById("swimDist").value) || 0;
+  const bikeDist = Number(document.getElementById("bikeDist").value) || 0;
+  const runDist = Number(document.getElementById("runDist").value) || 0;
+
+  document.getElementById("swimPaceDisplay").textContent = swimPace(swimDist, getHMS("swimTime"));
+  document.getElementById("bikePaceDisplay").textContent = bikeSpeed(bikeDist, getHMS("bikeTime"));
+  document.getElementById("runPaceDisplay").textContent = runPace(runDist, getHMS("runTime"));
 }
 
 function resetForm() {
@@ -249,7 +280,7 @@ function resetForm() {
   document.getElementById("photoPreview").src = "";
   photoBlob = null;
   for (const t of ["swimTime", "t1Time", "bikeTime", "t2Time", "runTime"]) setHMS(t, 0);
-  updateTotalDisplay();
+  updateComputedDisplays();
 }
 
 function openForm(race) {
@@ -277,7 +308,7 @@ function openForm(race) {
       preview.src = URL.createObjectURL(race.photo);
       preview.classList.remove("hidden");
     }
-    updateTotalDisplay();
+    updateComputedDisplays();
   }
 
   showView(formView);
@@ -312,7 +343,11 @@ document.getElementById("photoInput").addEventListener("change", (e) => {
 
 for (const target of ["swimTime", "t1Time", "bikeTime", "t2Time", "runTime"]) {
   const { h, m, s } = hmsInputs(target);
-  [h, m, s].forEach((input) => input.addEventListener("input", updateTotalDisplay));
+  [h, m, s].forEach((input) => input.addEventListener("input", updateComputedDisplays));
+}
+
+for (const id of ["swimDist", "bikeDist", "runDist"]) {
+  document.getElementById(id).addEventListener("input", updateComputedDisplays);
 }
 
 document.getElementById("raceForm").addEventListener("submit", async (e) => {

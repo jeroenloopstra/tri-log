@@ -199,9 +199,10 @@ body {
 .race-card img {
   width: 58px;
   height: 58px;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--color-photo-frame);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: #dfe7e9;
   flex-shrink: 0;
 }
 
@@ -341,6 +342,7 @@ body {
   max-height: 320px;
   object-fit: contain;
   background: var(--color-photo-frame);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   margin-bottom: 14px;
 }
@@ -360,6 +362,14 @@ body {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+}
+
+.detail-table .pace {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
 }
 
 .detail-table tr.total td {
@@ -630,6 +640,14 @@ body {
   font-size: 13px;
   color: var(--color-muted);
   margin-bottom: 4px;
+}
+
+.pace-display {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-brand-dark);
+  min-height: 16px;
 }
 
 .hms {
