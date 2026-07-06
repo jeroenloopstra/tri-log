@@ -1,0 +1,286 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #f4f6f7;
+  color: #16262e;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.hidden { display: none !important; }
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #0f4c5c;
+  color: #fff;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view {
+  min-height: calc(100vh - 60px);
+  padding: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #6b7c82;
+  margin-top: 60px;
+}
+
+.race-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.race-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.race-card img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #dfe7e9;
+  flex-shrink: 0;
+}
+
+.race-card .placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: #0f4c5c;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.race-card .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.race-card .name {
+  font-weight: 600;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.race-card .meta {
+  color: #6b7c82;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.race-card .total {
+  font-weight: 600;
+  color: #0f4c5c;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.detail-header h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.text-btn {
+  border: none;
+  background: none;
+  color: #0f4c5c;
+  font-size: 16px;
+  padding: 6px 4px;
+}
+
+.text-btn.primary { font-weight: 600; }
+.text-btn.danger { color: #c0392b; }
+
+#detailContent {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+#detailContent .detail-photo {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+#detailContent h3 {
+  margin: 0 0 4px;
+}
+
+#detailContent .date {
+  color: #6b7c82;
+  margin-bottom: 12px;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.detail-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid #eef1f2;
+  font-size: 15px;
+}
+
+.detail-table td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-table tr.total td {
+  font-weight: 700;
+  border-bottom: none;
+  padding-top: 12px;
+}
+
+.field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.field > span {
+  display: block;
+  font-size: 13px;
+  color: #6b7c82;
+  margin-bottom: 4px;
+}
+
+.field input[type="text"],
+.field input[type="date"],
+.subfield input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d7dee0;
+  border-radius: 8px;
+  font-size: 16px;
+  background: #fff;
+}
+
+.field input[type="file"] {
+  font-size: 14px;
+}
+
+.photo-preview {
+  margin-top: 8px;
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.segment {
+  border: 1px solid #e2e8ea;
+  border-radius: 10px;
+  padding: 10px 12px 12px;
+  margin: 0 0 12px;
+}
+
+.segment legend {
+  font-weight: 600;
+  padding: 0 4px;
+  color: #0f4c5c;
+}
+
+.subfield {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.subfield > span {
+  display: block;
+  font-size: 13px;
+  color: #6b7c82;
+  margin-bottom: 4px;
+}
+
+.time-input > span {
+  display: block;
+  font-size: 13px;
+  color: #6b7c82;
+  margin-bottom: 4px;
+}
+
+.hms {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hms input {
+  width: 100%;
+  text-align: center;
+  padding: 10px 0;
+  border: 1px solid #d7dee0;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0f4c5c;
+  color: #fff;
+  padding: 14px;
+  border-radius: 10px;
+  margin-top: 8px;
+  font-size: 16px;
+}
