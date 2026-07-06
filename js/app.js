@@ -344,7 +344,18 @@ document.getElementById("raceForm").addEventListener("submit", async (e) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.register("sw.js").then((reg) => {
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") reg.update();
+      });
+    }).catch(() => {});
+  });
+
+  let hasReloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hasReloaded) return;
+    hasReloaded = true;
+    window.location.reload();
   });
 }
 
