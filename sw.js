@@ -1,4 +1,4 @@
-const CACHE_NAME = "tri-log-v1";
+const CACHE_NAME = "tri-log-v2";
 const ASSETS = [
   "./",
   "./index.html",

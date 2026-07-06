@@ -4,6 +4,21 @@ const formView = document.getElementById("formView");
 const raceList = document.getElementById("raceList");
 const emptyState = document.getElementById("emptyState");
 
+const TRI_TYPES = [
+  { value: "sprint", label: "Sprint" },
+  { value: "olympic", label: "Olympic (OD)" },
+  { value: "half", label: "Half (70.3)" },
+  { value: "full", label: "Full (140.6)" },
+  { value: "other", label: "Other" },
+];
+
+function typeLabel(value) {
+  return TRI_TYPES.find((t) => t.value === value)?.label || "Other";
+}
+
+const typeSelect = document.getElementById("typeInput");
+typeSelect.innerHTML = TRI_TYPES.map((t) => `<option value="${t.value}">${t.label}</option>`).join("");
+
 let races = [];
 let currentId = null;
 let photoBlob = null;
@@ -61,7 +76,10 @@ async function refreshList() {
       ${mediaHtml}
       <div class="info">
         <div class="name">${escapeHtml(race.name || "Untitled race")}</div>
-        <div class="meta">${formatDate(race.date)}</div>
+        <div class="meta">
+          <span class="type-badge type-${race.type || "other"}">${typeLabel(race.type)}</span>
+          <span class="meta-date">${formatDate(race.date)}</span>
+        </div>
       </div>
       <div class="total">${formatSeconds(totalSeconds(race))}</div>
     `;
@@ -76,6 +94,9 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+const PENCIL_ICON = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+const TRASH_ICON = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>`;
+
 function openDetail(id) {
   const race = races.find((r) => r.id === id);
   if (!race) return;
@@ -87,9 +108,18 @@ function openDetail(id) {
     : "";
 
   content.innerHTML = `
+    <div class="detail-name-row">
+      <h3>${escapeHtml(race.name || "Untitled race")}</h3>
+      <div class="detail-actions">
+        <button id="editBtn" class="icon-btn-plain" aria-label="Edit">${PENCIL_ICON}</button>
+        <button id="deleteBtn" class="icon-btn-plain danger" aria-label="Delete">${TRASH_ICON}</button>
+      </div>
+    </div>
+    <div class="badges">
+      <span class="type-badge type-${race.type || "other"}">${typeLabel(race.type)}</span>
+      <span class="date">${formatDate(race.date)}</span>
+    </div>
     ${photoHtml}
-    <h3>${escapeHtml(race.name || "Untitled race")}</h3>
-    <div class="date">${formatDate(race.date)}</div>
     <table class="detail-table">
       <tr><td>Swim (${race.swimDist || 0} m)</td><td>${formatSeconds(race.swimTime)}</td></tr>
       <tr><td>T1</td><td>${formatSeconds(race.t1Time)}</td></tr>
@@ -100,7 +130,19 @@ function openDetail(id) {
     </table>
   `;
 
+  document.getElementById("editBtn").addEventListener("click", () => openForm(race));
+  document.getElementById("deleteBtn").addEventListener("click", deleteCurrentRace);
+
   showView(detailView);
+}
+
+async function deleteCurrentRace() {
+  if (!currentId) return;
+  if (!confirm("Delete this race result?")) return;
+  await RaceStore.remove(currentId);
+  currentId = null;
+  await refreshList();
+  showView(listView);
 }
 
 function hmsInputs(target) {
@@ -144,6 +186,8 @@ function openForm(race) {
   resetForm();
   document.getElementById("formTitle").textContent = race ? "Edit Race" : "New Race";
 
+  typeSelect.value = (race && race.type) || "sprint";
+
   if (race) {
     document.getElementById("nameInput").value = race.name || "";
     document.getElementById("dateInput").value = race.date || "";
@@ -172,26 +216,17 @@ document.getElementById("addBtn").addEventListener("click", () => {
   openForm(null);
 });
 
+document.getElementById("emptyAddBtn").addEventListener("click", () => {
+  currentId = null;
+  openForm(null);
+});
+
 document.getElementById("backBtn").addEventListener("click", () => {
   showView(listView);
 });
 
 document.getElementById("cancelBtn").addEventListener("click", () => {
   showView(currentId ? detailView : listView);
-});
-
-document.getElementById("editBtn").addEventListener("click", () => {
-  const race = races.find((r) => r.id === currentId);
-  openForm(race);
-});
-
-document.getElementById("deleteBtn").addEventListener("click", async () => {
-  if (!currentId) return;
-  if (!confirm("Delete this race result?")) return;
-  await RaceStore.remove(currentId);
-  currentId = null;
-  await refreshList();
-  showView(listView);
 });
 
 document.getElementById("photoInput").addEventListener("change", (e) => {
@@ -214,6 +249,7 @@ document.getElementById("raceForm").addEventListener("submit", async (e) => {
   const race = {
     id: currentId || `${Date.now()}-${Math.floor(performance.now())}`,
     name: document.getElementById("nameInput").value.trim(),
+    type: typeSelect.value,
     date: document.getElementById("dateInput").value,
     photo: photoBlob || null,
     swimDist: Number(document.getElementById("swimDist").value) || 0,
