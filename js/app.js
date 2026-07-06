@@ -3,6 +3,16 @@ const detailView = document.getElementById("detailView");
 const formView = document.getElementById("formView");
 const raceList = document.getElementById("raceList");
 const emptyState = document.getElementById("emptyState");
+const listToolbar = document.getElementById("listToolbar");
+const sortSelect = document.getElementById("sortSelect");
+
+let sortMode = localStorage.getItem("triLogSortMode") || "date";
+sortSelect.value = sortMode;
+sortSelect.addEventListener("change", () => {
+  sortMode = sortSelect.value;
+  localStorage.setItem("triLogSortMode", sortMode);
+  refreshList();
+});
 
 const TRI_TYPES = [
   { value: "sprint", label: "Sprint" },
@@ -76,8 +86,14 @@ function formatDate(dateStr) {
 
 async function refreshList() {
   races = await RaceStore.getAll();
+  if (sortMode === "name") {
+    races.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  } else {
+    races.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  }
   raceList.innerHTML = "";
   emptyState.classList.toggle("hidden", races.length > 0);
+  listToolbar.classList.toggle("hidden", races.length === 0);
 
   for (const race of races) {
     const li = document.createElement("li");

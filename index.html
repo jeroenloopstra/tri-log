@@ -23,6 +23,12 @@
 </header>
 
 <main id="listView" class="view">
+  <div id="listToolbar" class="list-toolbar hidden">
+    <select id="sortSelect" class="sort-select">
+      <option value="date">Date</option>
+      <option value="name">Name</option>
+    </select>
+  </div>
   <div id="emptyState" class="empty-state hidden">
     <p class="empty-title">No races yet</p>
     <button id="emptyAddBtn" class="empty-cta">Tap here to add your first result &rarr;</button>
@@ -49,7 +55,6 @@
     </div>
 
     <div class="field">
-      <span>Photo</span>
       <label id="photoPicker" for="photoInput" class="photo-picker">
         <input type="file" id="photoInput" accept="image/*" capture="environment" class="visually-hidden">
         <img id="photoPreview" class="photo-preview hidden" alt="Preview">
@@ -75,7 +80,10 @@
 
     <label class="field">
       <span>Date</span>
-      <input type="date" id="dateInput">
+      <div class="date-input-wrap">
+        <input type="date" id="dateInput">
+        <svg class="date-input-icon" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+      </div>
     </label>
 
     <label class="field">
