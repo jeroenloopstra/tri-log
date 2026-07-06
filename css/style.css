@@ -20,6 +20,7 @@
   --type-other: #6b7488;
 
   --color-result-bg: #ecfdf5;
+  --color-photo-frame: #ffffff;
 
   --radius-lg: 20px;
   --radius-md: 14px;
@@ -41,6 +42,7 @@
   --color-brand-dark: #5eead4;
 
   --color-result-bg: rgba(45, 212, 191, 0.16);
+  --color-photo-frame: #000000;
 
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.45);
   --shadow-fab: 0 8px 20px rgba(0, 0, 0, 0.5);
@@ -336,8 +338,9 @@ body {
 
 #detailContent .detail-photo {
   width: 100%;
-  max-height: 220px;
-  object-fit: cover;
+  max-height: 320px;
+  object-fit: contain;
+  background: var(--color-photo-frame);
   border-radius: var(--radius-md);
   margin-bottom: 14px;
 }
@@ -543,7 +546,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 160px;
+  height: 220px;
   border-radius: var(--radius-md);
   border: 2px dashed var(--color-border);
   background: var(--color-surface);
@@ -570,7 +573,8 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--color-photo-frame);
 }
 
 .photo-preview:not(.hidden) ~ .photo-picker-empty {
