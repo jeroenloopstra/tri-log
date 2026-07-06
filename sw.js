@@ -1,10 +1,11 @@
-const CACHE_NAME = "tri-log-v14";
+const CACHE_NAME = "tri-log-v15";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/app.js",
   "./js/db.js",
+  "./js/cities.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

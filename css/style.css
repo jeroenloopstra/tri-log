@@ -27,6 +27,7 @@
   --radius-sm: 10px;
   --shadow-card: 0 4px 16px rgba(18, 23, 43, 0.08);
   --shadow-fab: 0 8px 20px rgba(13, 148, 136, 0.35);
+  --nav-height: 62px;
 
   color-scheme: light;
 }
@@ -126,7 +127,7 @@ body {
 
 .view {
   min-height: calc(100vh - 64px);
-  padding: 14px 16px 100px;
+  padding: 14px 16px calc(var(--nav-height) + 100px);
   position: relative;
 }
 
@@ -275,7 +276,7 @@ body {
 .fab {
   position: fixed;
   right: 20px;
-  bottom: calc(24px + env(safe-area-inset-bottom));
+  bottom: calc(var(--nav-height) + 16px + env(safe-area-inset-bottom));
   width: 58px;
   height: 58px;
   border-radius: 50%;
@@ -287,6 +288,124 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 20;
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  height: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 16px rgba(18, 23, 43, 0.06);
+}
+
+.bottom-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bottom-nav-btn.active {
+  color: var(--color-brand-dark);
+}
+
+#mapView.view {
+  padding: 0;
+}
+
+.map-container {
+  width: 100%;
+  height: calc(100dvh - 64px - var(--nav-height) - env(safe-area-inset-bottom));
+  background: var(--color-surface);
+}
+
+.map-empty-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  max-width: 78%;
+  text-align: center;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  pointer-events: none;
+}
+
+.map-popup .type-badge {
+  margin-bottom: 4px;
+}
+
+.map-popup h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.map-popup p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #667;
+}
+
+.map-popup button {
+  border: none;
+  background: var(--color-brand);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.city-picker {
+  position: relative;
+}
+
+.city-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 15;
+}
+
+.city-suggestion-item {
+  padding: 10px 14px;
+  font-size: 15px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.city-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.city-suggestion-item:active {
+  background: var(--color-bg);
 }
 
 .toast {

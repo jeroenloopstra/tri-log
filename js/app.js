@@ -1,6 +1,7 @@
 const listView = document.getElementById("listView");
 const detailView = document.getElementById("detailView");
 const formView = document.getElementById("formView");
+const mapView = document.getElementById("mapView");
 const raceList = document.getElementById("raceList");
 const emptyState = document.getElementById("emptyState");
 const emptyTitle = document.getElementById("emptyTitle");
@@ -8,6 +9,60 @@ const emptyAddBtn = document.getElementById("emptyAddBtn");
 const listToolbar = document.getElementById("listToolbar");
 const sortSelect = document.getElementById("sortSelect");
 const typeFilterSelect = document.getElementById("typeFilterSelect");
+const bottomNav = document.getElementById("bottomNav");
+const navListBtn = document.getElementById("navListBtn");
+const navMapBtn = document.getElementById("navMapBtn");
+const countrySelect = document.getElementById("countryInput");
+const cityInput = document.getElementById("cityInput");
+const citySuggestions = document.getElementById("citySuggestions");
+
+countrySelect.innerHTML = COUNTRIES.map((c) => `<option value="${c.code}">${c.name}</option>`).join("");
+
+let selectedCity = null;
+
+function renderCitySuggestions(query) {
+  const country = COUNTRIES.find((c) => c.code === countrySelect.value);
+  if (!country || !query) {
+    citySuggestions.classList.add("hidden");
+    citySuggestions.innerHTML = "";
+    return;
+  }
+  const q = query.trim().toLowerCase();
+  const matches = country.cities.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 8);
+  if (matches.length === 0) {
+    citySuggestions.classList.add("hidden");
+    citySuggestions.innerHTML = "";
+    return;
+  }
+  citySuggestions.innerHTML = matches
+    .map((c) => `<div class="city-suggestion-item" data-name="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>`)
+    .join("");
+  citySuggestions.classList.remove("hidden");
+}
+
+cityInput.addEventListener("input", () => {
+  selectedCity = null;
+  renderCitySuggestions(cityInput.value);
+});
+
+citySuggestions.addEventListener("click", (e) => {
+  const item = e.target.closest(".city-suggestion-item");
+  if (!item) return;
+  const country = COUNTRIES.find((c) => c.code === countrySelect.value);
+  selectedCity = country.cities.find((c) => c.name === item.dataset.name) || null;
+  cityInput.value = item.dataset.name;
+  citySuggestions.classList.add("hidden");
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".city-picker")) citySuggestions.classList.add("hidden");
+});
+
+countrySelect.addEventListener("change", () => {
+  cityInput.value = "";
+  selectedCity = null;
+  citySuggestions.classList.add("hidden");
+});
 
 const themeToggle = document.getElementById("themeToggle");
 themeToggle.addEventListener("click", () => {
@@ -74,10 +129,29 @@ let races = [];
 let currentId = null;
 let photoBlob = null;
 
+let lastMainView = listView;
+
 function showView(view) {
-  for (const v of [listView, detailView, formView]) v.classList.add("hidden");
+  for (const v of [listView, detailView, formView, mapView]) v.classList.add("hidden");
   view.classList.remove("hidden");
+
+  const isMainView = view === listView || view === mapView;
+  bottomNav.classList.toggle("hidden", !isMainView);
+  if (isMainView) {
+    lastMainView = view;
+    navListBtn.classList.toggle("active", view === listView);
+    navMapBtn.classList.toggle("active", view === mapView);
+  }
 }
+
+navListBtn.addEventListener("click", () => {
+  showView(listView);
+});
+
+navMapBtn.addEventListener("click", () => {
+  showView(mapView);
+  renderMap();
+});
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -211,6 +285,7 @@ function openDetail(id) {
       <span class="type-badge type-${race.type || "other"}">${typeLabel(race.type)}</span>
       <span class="date">${formatDate(race.date)}</span>
       ${resultLabel(race) ? `<span class="result-badge">${resultLabel(race)}</span>` : ""}
+      ${race.city ? `<span class="date">${escapeHtml(race.city)}</span>` : ""}
     </div>
     ${photoHtml}
     <table class="detail-table">
@@ -279,6 +354,8 @@ function resetForm() {
   document.getElementById("photoPreview").classList.add("hidden");
   document.getElementById("photoPreview").src = "";
   photoBlob = null;
+  selectedCity = null;
+  citySuggestions.classList.add("hidden");
   for (const t of ["swimTime", "t1Time", "bikeTime", "t2Time", "runTime"]) setHMS(t, 0);
   updateComputedDisplays();
   document.getElementById("nameInput").classList.remove("invalid");
@@ -294,6 +371,11 @@ function openForm(race) {
   if (race) {
     document.getElementById("nameInput").value = race.name || "";
     document.getElementById("dateInput").value = race.date || "";
+    countrySelect.value = race.country || "NL";
+    if (race.city) {
+      cityInput.value = race.city;
+      selectedCity = (race.lat != null && race.lng != null) ? { name: race.city, lat: race.lat, lng: race.lng } : findCity(countrySelect.value, race.city);
+    }
     document.getElementById("placeInput").value = race.place || "";
     document.getElementById("fieldSizeInput").value = race.fieldSize || "";
     document.getElementById("swimDist").value = race.swimDist || "";
@@ -327,11 +409,11 @@ document.getElementById("emptyAddBtn").addEventListener("click", () => {
 });
 
 document.getElementById("backBtn").addEventListener("click", () => {
-  showView(listView);
+  showView(lastMainView);
 });
 
 document.getElementById("cancelBtn").addEventListener("click", () => {
-  showView(currentId ? detailView : listView);
+  showView(currentId ? detailView : lastMainView);
 });
 
 document.getElementById("photoInput").addEventListener("change", (e) => {
@@ -395,6 +477,10 @@ document.getElementById("raceForm").addEventListener("submit", async (e) => {
     name: document.getElementById("nameInput").value.trim(),
     type: typeSelect.value,
     date: document.getElementById("dateInput").value,
+    country: countrySelect.value,
+    city: cityInput.value.trim() || null,
+    lat: selectedCity ? selectedCity.lat : null,
+    lng: selectedCity ? selectedCity.lng : null,
     place: Number(document.getElementById("placeInput").value) || null,
     fieldSize: Number(document.getElementById("fieldSizeInput").value) || null,
     photo: photoBlob || null,
@@ -413,6 +499,54 @@ document.getElementById("raceForm").addEventListener("submit", async (e) => {
   await refreshList();
   openDetail(race.id);
 });
+
+let mapInstance = null;
+let markerLayer = null;
+const mapEmptyState = document.getElementById("mapEmptyState");
+
+function renderMap() {
+  const defaultCountry = COUNTRIES[0];
+
+  if (!mapInstance) {
+    mapInstance = L.map("mapContainer").setView(defaultCountry.center, defaultCountry.zoom);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(mapInstance);
+    markerLayer = L.layerGroup().addTo(mapInstance);
+  }
+
+  setTimeout(() => mapInstance.invalidateSize(), 100);
+
+  RaceStore.getAll().then((allRaces) => {
+    markerLayer.clearLayers();
+    const located = allRaces.filter((r) => r.lat != null && r.lng != null);
+    mapEmptyState.classList.toggle("hidden", located.length > 0);
+
+    located.forEach((race) => {
+      const marker = L.marker([race.lat, race.lng]).addTo(markerLayer);
+      const meta = [race.city, formatDate(race.date)].filter(Boolean).join(" &middot; ");
+      marker.bindPopup(`
+        <div class="map-popup">
+          <span class="type-badge type-${race.type || "other"}">${typeLabel(race.type)}</span>
+          <h4>${escapeHtml(race.name || "Untitled race")}</h4>
+          <p>${meta}</p>
+          <button onclick="openRaceFromMap('${race.id}')">View</button>
+        </div>
+      `);
+    });
+
+    if (located.length > 0) {
+      const bounds = L.featureGroup(located.map((r) => L.marker([r.lat, r.lng]))).getBounds();
+      mapInstance.fitBounds(bounds.pad(0.25), { maxZoom: 12 });
+    }
+  });
+}
+
+async function openRaceFromMap(id) {
+  races = await RaceStore.getAll();
+  openDetail(id);
+}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
