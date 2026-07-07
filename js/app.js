@@ -935,12 +935,26 @@ document.getElementById("shareSendBtn").addEventListener("click", async () => {
   }
 });
 
-async function exportData() {
-  const races = (await RaceStore.getAll()).map((r) => {
-    const copy = { ...r };
-    delete copy.photo;
-    return copy;
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
   });
+}
+
+async function exportData() {
+  const races = await Promise.all(
+    (await RaceStore.getAll()).map(async (r) => {
+      const copy = { ...r };
+      if (copy.photo instanceof Blob) {
+        copy.photoData = await blobToDataUrl(copy.photo);
+      }
+      delete copy.photo;
+      return copy;
+    })
+  );
   const payload = { app: "tri-log", version: 1, exportedAt: new Date().toISOString(), races };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const filename = `tri-log-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -978,7 +992,14 @@ document.getElementById("importFileInput").addEventListener("change", async (e) 
     let updated = 0;
     for (const imported of parsed.races) {
       const prior = existing.get(imported.id);
-      await RaceStore.put({ ...imported, photo: prior ? prior.photo : null });
+      const raceToSave = { ...imported };
+      if (raceToSave.photoData) {
+        raceToSave.photo = await (await fetch(raceToSave.photoData)).blob();
+      } else {
+        raceToSave.photo = prior ? prior.photo : null;
+      }
+      delete raceToSave.photoData;
+      await RaceStore.put(raceToSave);
       if (prior) updated++;
       else added++;
     }
