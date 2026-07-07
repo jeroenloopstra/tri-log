@@ -4,6 +4,7 @@ const formView = document.getElementById("formView");
 const mapView = document.getElementById("mapView");
 const settingsView = document.getElementById("settingsView");
 const statsView = document.getElementById("statsView");
+const recordDetailView = document.getElementById("recordDetailView");
 const raceList = document.getElementById("raceList");
 const emptyState = document.getElementById("emptyState");
 const emptyTitle = document.getElementById("emptyTitle");
@@ -143,7 +144,7 @@ let photoBlob = null;
 let lastMainView = listView;
 
 function showView(view) {
-  for (const v of [listView, detailView, formView, mapView, settingsView, statsView]) v.classList.add("hidden");
+  for (const v of [listView, detailView, formView, mapView, settingsView, statsView, recordDetailView]) v.classList.add("hidden");
   view.classList.remove("hidden");
 
   const isMainView = view === listView || view === mapView || view === statsView;
@@ -279,6 +280,7 @@ function escapeHtml(str) {
 
 const PENCIL_ICON = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
 const TRASH_ICON = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>`;
+const SHARE_ICON = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4L7 9M12 4l5 5"/><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>`;
 
 function openDetail(id) {
   const race = races.find((r) => r.id === id);
@@ -294,6 +296,7 @@ function openDetail(id) {
     <div class="detail-name-row">
       <h3>${escapeHtml(race.name || "Untitled race")}</h3>
       <div class="detail-actions">
+        <button id="shareBtn" class="icon-btn-plain" aria-label="Share">${SHARE_ICON}</button>
         <button id="editBtn" class="icon-btn-plain" aria-label="Edit">${PENCIL_ICON}</button>
         <button id="deleteBtn" class="icon-btn-plain danger" aria-label="Delete">${TRASH_ICON}</button>
       </div>
@@ -317,6 +320,7 @@ function openDetail(id) {
 
   document.getElementById("editBtn").addEventListener("click", () => openForm(race));
   document.getElementById("deleteBtn").addEventListener("click", deleteCurrentRace);
+  document.getElementById("shareBtn").addEventListener("click", () => openShareModal(race));
 
   showView(detailView);
 }
@@ -520,11 +524,11 @@ document.getElementById("raceForm").addEventListener("submit", async (e) => {
 const statsContent = document.getElementById("statsContent");
 const statsEmptyState = document.getElementById("statsEmptyState");
 
-function transitionCard(label, races, field) {
+function transitionCard(label, field, races) {
   if (races.length === 0) return "";
   const best = races.reduce((a, b) => (a[field] <= b[field] ? a : b));
   return `
-    <div class="pr-card">
+    <div class="pr-card" data-kind="transition" data-field="${field}" data-label="${label}">
       <span class="pr-label">${label}</span>
       <span class="pr-time">${formatSeconds(best[field])}</span>
       <span class="pr-race">${escapeHtml(best.name || "Untitled race")}</span>
@@ -551,7 +555,7 @@ async function renderStats() {
     if (racesOfType.length === 0) return "";
     const best = racesOfType.reduce((a, b) => (totalSeconds(a) <= totalSeconds(b) ? a : b));
     return `
-      <div class="pr-card">
+      <div class="pr-card" data-kind="type" data-type="${t.value}" data-label="${t.label}">
         <span class="type-badge type-${t.value}">${t.label}</span>
         <span class="pr-time">${formatSeconds(totalSeconds(best))}</span>
         <span class="pr-race">${escapeHtml(best.name || "Untitled race")}</span>
@@ -561,8 +565,8 @@ async function renderStats() {
   }).filter(Boolean);
 
   const transitionCards = [
-    transitionCard("T1", t1Races, "t1Time"),
-    transitionCard("T2", t2Races, "t2Time"),
+    transitionCard("T1", "t1Time", t1Races),
+    transitionCard("T2", "t2Time", t2Races),
   ].filter(Boolean);
 
   let html = "";
@@ -574,6 +578,60 @@ async function renderStats() {
   }
   statsContent.innerHTML = html;
 }
+
+statsContent.addEventListener("click", async (e) => {
+  const card = e.target.closest(".pr-card");
+  if (!card) return;
+  const allRaces = await RaceStore.getAll();
+
+  let ranked;
+  let title;
+  let field;
+  if (card.dataset.kind === "type") {
+    const racesOfType = allRaces.filter((r) => (r.type || "other") === card.dataset.type && totalSeconds(r) > 0);
+    ranked = racesOfType
+      .map((r) => ({ race: r, value: totalSeconds(r) }))
+      .sort((a, b) => a.value - b.value);
+    title = `${card.dataset.label} Results`;
+    field = null;
+  } else {
+    field = card.dataset.field;
+    const racesWithField = allRaces.filter((r) => (r[field] || 0) > 0);
+    ranked = racesWithField
+      .map((r) => ({ race: r, value: r[field] }))
+      .sort((a, b) => a.value - b.value);
+    title = `${card.dataset.label} Results`;
+  }
+
+  document.getElementById("recordDetailTitle").textContent = title;
+  document.getElementById("recordDetailList").innerHTML = ranked
+    .map(
+      ({ race, value }, i) => `
+        <li class="record-row" data-id="${race.id}">
+          <div class="record-rank">${i + 1}</div>
+          <div class="info">
+            <div class="name">${escapeHtml(race.name || "Untitled race")}</div>
+            <div class="date">${formatDate(race.date)}</div>
+          </div>
+          <div class="time">${formatSeconds(value)}</div>
+        </li>
+      `
+    )
+    .join("");
+
+  races = allRaces;
+  showView(recordDetailView);
+});
+
+document.getElementById("recordDetailList").addEventListener("click", (e) => {
+  const row = e.target.closest(".record-row");
+  if (!row) return;
+  openDetail(row.dataset.id);
+});
+
+document.getElementById("recordBackBtn").addEventListener("click", () => {
+  showView(lastMainView);
+});
 
 let mapInstance = null;
 let markerLayer = null;
@@ -633,6 +691,249 @@ function downloadBlob(blob, filename) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+const SHARE_TYPE_COLORS = {
+  sprint: "#10b981",
+  olympic: "#3b82f6",
+  half: "#f59e0b",
+  full: "#a855f7",
+  other: "#6b7488",
+};
+
+function roundedRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function wrapCanvasText(ctx, text, maxWidth, maxLines) {
+  const words = text.split(" ");
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+      if (lines.length === maxLines) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines.length < maxLines) lines.push(line);
+  return lines;
+}
+
+function loadImageFromBlob(blob) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = URL.createObjectURL(blob);
+  });
+}
+
+async function buildShareCardBlob(race) {
+  const W = 1080;
+  const H = 1350;
+  const left = 72;
+  const right = W - 72;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  if (race.photo) {
+    const img = await loadImageFromBlob(race.photo);
+    const scale = Math.max(W / img.width, H / img.height);
+    const dw = img.width * scale;
+    const dh = img.height * scale;
+    ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    const overlay = ctx.createLinearGradient(0, 0, 0, H);
+    overlay.addColorStop(0, "rgba(8,12,24,0.55)");
+    overlay.addColorStop(0.5, "rgba(8,12,24,0.55)");
+    overlay.addColorStop(1, "rgba(8,12,24,0.92)");
+    ctx.fillStyle = overlay;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, "#0d9488");
+    bg.addColorStop(0.55, "#2563eb");
+    bg.addColorStop(1, "#7c3aed");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.globalAlpha = 0.14;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(W * 0.88, H * 0.1, 260, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(W * 0.05, H * 0.92, 240, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  const typeColor = SHARE_TYPE_COLORS[race.type] || SHARE_TYPE_COLORS.other;
+
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.font = "800 26px -apple-system, sans-serif";
+  ctx.fillText("TRIATHLON RESULTS", left, 88);
+
+  const typeText = typeLabel(race.type).toUpperCase();
+  ctx.font = "800 28px -apple-system, sans-serif";
+  const badgeW = ctx.measureText(typeText).width + 48;
+  const badgeY = 150;
+  roundedRectPath(ctx, left, badgeY, badgeW, 58, 29);
+  ctx.fillStyle = typeColor;
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.textBaseline = "middle";
+  ctx.fillText(typeText, left + 24, badgeY + 29);
+
+  ctx.font = "600 30px -apple-system, sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.fillText(formatDate(race.date), left + badgeW + 22, badgeY + 29);
+
+  ctx.textBaseline = "alphabetic";
+  ctx.font = "800 66px -apple-system, sans-serif";
+  ctx.fillStyle = "#ffffff";
+  const nameLines = wrapCanvasText(ctx, race.name || "Untitled race", right - left, 2);
+  let estimatedBottom = 320 + nameLines.length * 74;
+  if (race.city) estimatedBottom += 50;
+  estimatedBottom += 46 + 100 + 70 + 220 + 70;
+  if (race.place && race.fieldSize) estimatedBottom += 64;
+  const gapToFooter = H - 150 - estimatedBottom;
+  const verticalOffset = gapToFooter > 250 ? Math.min(gapToFooter / 2, 160) : 0;
+
+  let y = 320 + verticalOffset;
+  for (const line of nameLines) {
+    ctx.fillText(line, left, y);
+    y += 74;
+  }
+
+  if (race.city) {
+    ctx.font = "600 32px -apple-system, sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.beginPath();
+    ctx.arc(left + 8, y + 12, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillText(race.city, left + 26, y + 22);
+    y += 50;
+  }
+  y += 46;
+
+  ctx.font = "700 28px -apple-system, sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.65)";
+  ctx.fillText("TOTAL TIME", left, y);
+  y += 100;
+  ctx.font = "800 128px -apple-system, sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(formatSeconds(totalSeconds(race)), left, y);
+
+  const splitsTop = y + 70;
+  const splitsH = 220;
+  roundedRectPath(ctx, left, splitsTop, right - left, splitsH, 28);
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  ctx.fill();
+
+  const splits = [
+    { label: "SWIM", color: "#38bdf8", time: race.swimTime, sub: race.swimDist ? `${race.swimDist} m` : "" },
+    { label: "T1", color: "#e2e8f0", time: race.t1Time, sub: "" },
+    { label: "BIKE", color: "#fbbf24", time: race.bikeTime, sub: race.bikeDist ? `${race.bikeDist} km` : "" },
+    { label: "T2", color: "#e2e8f0", time: race.t2Time, sub: "" },
+    { label: "RUN", color: "#34d399", time: race.runTime, sub: race.runDist ? `${race.runDist} km` : "" },
+  ];
+  const colW = (right - left) / splits.length;
+  ctx.textAlign = "center";
+  splits.forEach((s, i) => {
+    const cx = left + colW * i + colW / 2;
+    ctx.font = "800 22px -apple-system, sans-serif";
+    ctx.fillStyle = s.color;
+    ctx.fillText(s.label, cx, splitsTop + 46);
+    ctx.font = "800 34px -apple-system, sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(formatSeconds(s.time || 0).replace(/^00:/, ""), cx, splitsTop + 104);
+    if (s.sub) {
+      ctx.font = "600 22px -apple-system, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.65)";
+      ctx.fillText(s.sub, cx, splitsTop + 140);
+    }
+    if (i > 0) {
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(left + colW * i, splitsTop + 30);
+      ctx.lineTo(left + colW * i, splitsTop + splitsH - 30);
+      ctx.stroke();
+    }
+  });
+  ctx.textAlign = "left";
+
+  const afterSplitsY = splitsTop + splitsH + 70;
+  if (race.place && race.fieldSize) {
+    const text = `${race.place} of ${race.fieldSize} finishers`;
+    ctx.font = "700 32px -apple-system, sans-serif";
+    const pillW = ctx.measureText(text).width + 56;
+    roundedRectPath(ctx, left, afterSplitsY, pillW, 64, 32);
+    ctx.fillStyle = "rgba(255,255,255,0.16)";
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, left + 28, afterSplitsY + 32);
+    ctx.textBaseline = "alphabetic";
+  }
+
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(left, H - 90);
+  ctx.lineTo(right, H - 90);
+  ctx.stroke();
+
+  ctx.font = "600 26px -apple-system, sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.textAlign = "center";
+  ctx.fillText("Tracked with Triathlon Results", W / 2, H - 52);
+  ctx.textAlign = "left";
+
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+}
+
+let currentShareBlob = null;
+
+async function openShareModal(race) {
+  const blob = await buildShareCardBlob(race);
+  currentShareBlob = blob;
+  document.getElementById("shareCardImg").src = URL.createObjectURL(blob);
+  document.getElementById("shareModal").classList.remove("hidden");
+}
+
+document.getElementById("shareCloseBtn").addEventListener("click", () => {
+  document.getElementById("shareModal").classList.add("hidden");
+});
+
+document.getElementById("shareSendBtn").addEventListener("click", async () => {
+  if (!currentShareBlob) return;
+  const filename = "triathlon-result.png";
+  const file = new File([currentShareBlob], filename, { type: "image/png" });
+
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    }
+    throw new Error("share unsupported");
+  } catch (err) {
+    if (err.name === "AbortError") return;
+    downloadBlob(currentShareBlob, filename);
+  }
+});
 
 async function exportData() {
   const races = (await RaceStore.getAll()).map((r) => {

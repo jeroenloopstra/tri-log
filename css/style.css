@@ -440,6 +440,38 @@ body {
   transform: translateX(-50%) translateY(0);
 }
 
+.share-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(5, 8, 16, 0.82);
+}
+
+.share-modal-inner {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+#shareCardImg {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.share-modal-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
 .invalid {
   border-color: var(--color-danger) !important;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
@@ -650,6 +682,67 @@ body {
 .pr-card .pr-date {
   font-size: 12px;
   color: var(--color-muted);
+}
+
+.pr-card {
+  cursor: pointer;
+}
+
+.record-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.record-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-card);
+}
+
+.record-rank {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gradient-brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.record-row .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.record-row .name {
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.record-row .date {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.record-row .time {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-brand-dark);
 }
 
 .btn {
