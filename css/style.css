@@ -87,14 +87,21 @@ body {
   letter-spacing: -0.02em;
 }
 
-.theme-toggle {
+.header-icon-btn {
   position: absolute;
-  right: 20px;
   top: 50%;
   transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
   box-shadow: none;
+}
+
+.theme-toggle {
+  right: 20px;
+}
+
+.settings-toggle {
+  left: 20px;
 }
 
 .theme-toggle .icon-sun {
@@ -566,6 +573,25 @@ body {
   display: flex;
   gap: 12px;
   margin-top: 16px;
+}
+
+.settings-title {
+  text-align: center;
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0 0 16px;
+}
+
+.settings-hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.settings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .btn {

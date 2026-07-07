@@ -2,6 +2,7 @@ const listView = document.getElementById("listView");
 const detailView = document.getElementById("detailView");
 const formView = document.getElementById("formView");
 const mapView = document.getElementById("mapView");
+const settingsView = document.getElementById("settingsView");
 const raceList = document.getElementById("raceList");
 const emptyState = document.getElementById("emptyState");
 const emptyTitle = document.getElementById("emptyTitle");
@@ -72,6 +73,14 @@ themeToggle.addEventListener("click", () => {
   localStorage.setItem("triLogTheme", next);
 });
 
+document.getElementById("settingsToggle").addEventListener("click", () => {
+  showView(settingsView);
+});
+
+document.getElementById("settingsBackBtn").addEventListener("click", () => {
+  showView(lastMainView);
+});
+
 const TRI_TYPES = [
   { value: "sprint", label: "Sprint" },
   { value: "olympic", label: "Olympic (OD)" },
@@ -132,7 +141,7 @@ let photoBlob = null;
 let lastMainView = listView;
 
 function showView(view) {
-  for (const v of [listView, detailView, formView, mapView]) v.classList.add("hidden");
+  for (const v of [listView, detailView, formView, mapView, settingsView]) v.classList.add("hidden");
   view.classList.remove("hidden");
 
   const isMainView = view === listView || view === mapView;
@@ -547,6 +556,72 @@ async function openRaceFromMap(id) {
   races = await RaceStore.getAll();
   openDetail(id);
 }
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function exportData() {
+  const races = (await RaceStore.getAll()).map((r) => {
+    const copy = { ...r };
+    delete copy.photo;
+    return copy;
+  });
+  const payload = { app: "tri-log", version: 1, exportedAt: new Date().toISOString(), races };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const filename = `tri-log-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const file = new File([blob], filename, { type: "application/json" });
+
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    }
+    throw new Error("share unsupported");
+  } catch (err) {
+    if (err.name === "AbortError") return;
+    downloadBlob(blob, filename);
+  }
+}
+
+document.getElementById("exportBtn").addEventListener("click", exportData);
+
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFileInput").click();
+});
+
+document.getElementById("importFileInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+
+  try {
+    const parsed = JSON.parse(await file.text());
+    if (parsed.app !== "tri-log" || !Array.isArray(parsed.races)) throw new Error("bad shape");
+
+    const existing = new Map((await RaceStore.getAll()).map((r) => [r.id, r]));
+    let added = 0;
+    let updated = 0;
+    for (const imported of parsed.races) {
+      const prior = existing.get(imported.id);
+      await RaceStore.put({ ...imported, photo: prior ? prior.photo : null });
+      if (prior) updated++;
+      else added++;
+    }
+
+    await refreshList();
+    showToast(`Imported ${added} new, updated ${updated} existing`);
+  } catch {
+    showToast("This doesn't look like a Tri Log backup file");
+  }
+});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

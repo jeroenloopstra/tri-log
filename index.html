@@ -27,7 +27,10 @@
 <body>
 
 <header class="app-header">
-  <button id="themeToggle" class="icon-btn-plain theme-toggle" aria-label="Toggle dark mode">
+  <button id="settingsToggle" class="icon-btn-plain header-icon-btn settings-toggle" aria-label="Settings">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+  </button>
+  <button id="themeToggle" class="icon-btn-plain header-icon-btn theme-toggle" aria-label="Toggle dark mode">
     <svg class="icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
     <svg class="icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12h2.5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
   </button>
@@ -70,6 +73,25 @@
     <span>Map</span>
   </button>
 </nav>
+
+<main id="settingsView" class="view hidden">
+  <div class="detail-topbar">
+    <button id="settingsBackBtn" class="icon-btn-plain" aria-label="Back">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+  </div>
+  <h2 class="settings-title">Settings</h2>
+
+  <fieldset class="segment">
+    <legend>Backup</legend>
+    <p class="settings-hint">Export your race data to a file you can keep safe, or restore it on this or another device.</p>
+    <div class="settings-actions">
+      <button type="button" id="exportBtn" class="btn btn-secondary">Export data</button>
+      <button type="button" id="importBtn" class="btn btn-secondary">Import data</button>
+    </div>
+    <input type="file" id="importFileInput" accept="application/json" class="visually-hidden">
+  </fieldset>
+</main>
 
 <main id="detailView" class="view hidden">
   <div class="detail-topbar">
