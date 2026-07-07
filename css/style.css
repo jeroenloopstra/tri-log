@@ -594,6 +594,64 @@ body {
   gap: 10px;
 }
 
+.stats-section-title {
+  margin: 20px 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-brand-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.stats-section-title:first-child {
+  margin-top: 0;
+}
+
+.pr-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.pr-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pr-card .pr-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.pr-card .pr-time {
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.pr-card .pr-race {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pr-card .pr-date {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
 .btn {
   flex: 1;
   border: none;

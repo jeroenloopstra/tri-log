@@ -3,6 +3,7 @@ const detailView = document.getElementById("detailView");
 const formView = document.getElementById("formView");
 const mapView = document.getElementById("mapView");
 const settingsView = document.getElementById("settingsView");
+const statsView = document.getElementById("statsView");
 const raceList = document.getElementById("raceList");
 const emptyState = document.getElementById("emptyState");
 const emptyTitle = document.getElementById("emptyTitle");
@@ -13,6 +14,7 @@ const typeFilterSelect = document.getElementById("typeFilterSelect");
 const bottomNav = document.getElementById("bottomNav");
 const navListBtn = document.getElementById("navListBtn");
 const navMapBtn = document.getElementById("navMapBtn");
+const navStatsBtn = document.getElementById("navStatsBtn");
 const countrySelect = document.getElementById("countryInput");
 const cityInput = document.getElementById("cityInput");
 const citySuggestions = document.getElementById("citySuggestions");
@@ -141,15 +143,16 @@ let photoBlob = null;
 let lastMainView = listView;
 
 function showView(view) {
-  for (const v of [listView, detailView, formView, mapView, settingsView]) v.classList.add("hidden");
+  for (const v of [listView, detailView, formView, mapView, settingsView, statsView]) v.classList.add("hidden");
   view.classList.remove("hidden");
 
-  const isMainView = view === listView || view === mapView;
+  const isMainView = view === listView || view === mapView || view === statsView;
   bottomNav.classList.toggle("hidden", !isMainView);
   if (isMainView) {
     lastMainView = view;
     navListBtn.classList.toggle("active", view === listView);
     navMapBtn.classList.toggle("active", view === mapView);
+    navStatsBtn.classList.toggle("active", view === statsView);
   }
 }
 
@@ -160,6 +163,11 @@ navListBtn.addEventListener("click", () => {
 navMapBtn.addEventListener("click", () => {
   showView(mapView);
   renderMap();
+});
+
+navStatsBtn.addEventListener("click", () => {
+  showView(statsView);
+  renderStats();
 });
 
 function pad(n) {
@@ -508,6 +516,64 @@ document.getElementById("raceForm").addEventListener("submit", async (e) => {
   await refreshList();
   openDetail(race.id);
 });
+
+const statsContent = document.getElementById("statsContent");
+const statsEmptyState = document.getElementById("statsEmptyState");
+
+function transitionCard(label, races, field) {
+  if (races.length === 0) return "";
+  const best = races.reduce((a, b) => (a[field] <= b[field] ? a : b));
+  return `
+    <div class="pr-card">
+      <span class="pr-label">${label}</span>
+      <span class="pr-time">${formatSeconds(best[field])}</span>
+      <span class="pr-race">${escapeHtml(best.name || "Untitled race")}</span>
+      <span class="pr-date">${formatDate(best.date)}</span>
+    </div>
+  `;
+}
+
+async function renderStats() {
+  const allRaces = await RaceStore.getAll();
+  const typedRaces = allRaces.filter((r) => totalSeconds(r) > 0);
+  const t1Races = allRaces.filter((r) => (r.t1Time || 0) > 0);
+  const t2Races = allRaces.filter((r) => (r.t2Time || 0) > 0);
+
+  if (typedRaces.length === 0 && t1Races.length === 0 && t2Races.length === 0) {
+    statsContent.innerHTML = "";
+    statsEmptyState.classList.remove("hidden");
+    return;
+  }
+  statsEmptyState.classList.add("hidden");
+
+  const typeCards = TRI_TYPES.map((t) => {
+    const racesOfType = typedRaces.filter((r) => (r.type || "other") === t.value);
+    if (racesOfType.length === 0) return "";
+    const best = racesOfType.reduce((a, b) => (totalSeconds(a) <= totalSeconds(b) ? a : b));
+    return `
+      <div class="pr-card">
+        <span class="type-badge type-${t.value}">${t.label}</span>
+        <span class="pr-time">${formatSeconds(totalSeconds(best))}</span>
+        <span class="pr-race">${escapeHtml(best.name || "Untitled race")}</span>
+        <span class="pr-date">${formatDate(best.date)}</span>
+      </div>
+    `;
+  }).filter(Boolean);
+
+  const transitionCards = [
+    transitionCard("T1", t1Races, "t1Time"),
+    transitionCard("T2", t2Races, "t2Time"),
+  ].filter(Boolean);
+
+  let html = "";
+  if (typeCards.length > 0) {
+    html += `<div class="stats-section-title">Race Bests</div><div class="pr-grid">${typeCards.join("")}</div>`;
+  }
+  if (transitionCards.length > 0) {
+    html += `<div class="stats-section-title">Transition Bests</div><div class="pr-grid">${transitionCards.join("")}</div>`;
+  }
+  statsContent.innerHTML = html;
+}
 
 let mapInstance = null;
 let markerLayer = null;

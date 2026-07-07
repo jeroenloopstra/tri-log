@@ -63,6 +63,15 @@
   </div>
 </main>
 
+<main id="statsView" class="view hidden">
+  <h2 class="settings-title">Personal Records</h2>
+  <div id="statsEmptyState" class="empty-state hidden">
+    <p class="empty-title">No records yet</p>
+    <p>Add race times to see your personal bests here.</p>
+  </div>
+  <div id="statsContent"></div>
+</main>
+
 <nav id="bottomNav" class="bottom-nav">
   <button id="navListBtn" class="bottom-nav-btn active" aria-label="Results list">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
@@ -71,6 +80,10 @@
   <button id="navMapBtn" class="bottom-nav-btn" aria-label="Map view">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3m0 13l6-3m-6 3V7m6 10l6 3V6l-6-3m0 14V4m0 0L9 7"/></svg>
     <span>Map</span>
+  </button>
+  <button id="navStatsBtn" class="bottom-nav-btn" aria-label="Personal records">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/></svg>
+    <span>Records</span>
   </button>
 </nav>
 
